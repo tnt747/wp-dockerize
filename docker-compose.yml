@@ -1,0 +1,96 @@
+services:
+  wordpress:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    user: "www-data"
+    ports:
+      - "80:80"
+    environment:
+      WORDPRESS_DB_HOST: "${DB_HOST}"
+      WORDPRESS_DB_NAME: "${DB_DATABASE}"
+      WORDPRESS_DB_USER: "${DB_USER}"
+      WORDPRESS_DB_PASSWORD: "${DB_PASSWORD}"
+      WORDPRESS_REDIS_HOST: "${REDIS_HOST}"
+      WORDPRESS_REDIS_PORT: "${REDIS_PORT}"
+      WORDPRESS_REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      WORDPRESS_REDIS_TIMEOUT: "${REDIS_TIMEOUT}"
+      WORDPRESS_REDIS_READ_TIMEOUT: "${REDIS_READ_TIMEOUT}"
+      WORDPRESS_SITE_URL: "${SITE_URL}"
+      WORDPRESS_SITE_TITLE: "${SITE_TITLE}"
+      WORDPRESS_ADMIN_USER: "${ADMIN_USER}"
+      WORDPRESS_ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
+      WORDPRESS_ADMIN_EMAIL: "${ADMIN_EMAIL}"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - redis_network
+      - wordpress_network
+  db:
+    image: mysql:8.0.37
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "${ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_USER: "${DB_USER}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./schema/:/docker-entrypoint-initdb.d
+    networks:
+      - wordpress_network
+      - mysql_network
+
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: always
+    ports:
+      - "8081:80"
+    networks:
+      - mysql_network
+    environment:
+      PMA_HOST: db
+      MYSQL_USER: "${DB_USER}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${ROOT_PASSWORD}"
+      UPLOAD_LIMIT: 3000M
+    depends_on:
+      - db
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    command: [ "redis-server", "--requirepass", "${REDIS_PASSWORD}", "--bind", "0.0.0.0", "--protected-mode", "yes" ]
+    networks:
+      - redis_network
+      - wordpress_network
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+    volumes:
+      - redis:/data
+
+volumes:
+  wordpress_data:
+  mariadb_data:
+  redis:
+  redisinsight:
+
+
+networks:
+  redis_network:
+    driver: bridge
+  wordpress_network:
+    driver: bridge
+  mysql_network:
+    driver: bridge
