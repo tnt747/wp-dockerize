@@ -1,6 +1,6 @@
 FROM wordpress:php8.1-apache
 
-COPY ./wordpress/ /var/www/html/
+COPY ./wordpress/ /var/www/html/blog
 
 # COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
@@ -40,10 +40,10 @@ RUN a2enmod rewrite headers
 
 
 # Set correct ownership for WordPress files
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www/html/blog
 
 # Set correct permissions
-RUN find /var/www/html -type d -exec chmod 755 {} \;
-RUN find /var/www/html -type f -exec chmod 644 {} \;
+RUN find /var/www/html/blog -type d -exec chmod 755 {} \;
+RUN find /var/www/html/blog -type f -exec chmod 644 {} \;
 
-WORKDIR /var/www/html
+WORKDIR /var/www/html/blog
