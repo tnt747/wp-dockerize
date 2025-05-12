@@ -45,8 +45,6 @@ RUN chown -R www-data:www-data /var/www/html/blog
 RUN find /var/www/html/blog -type d -exec chmod 755 {} \;
 RUN find /var/www/html/blog -type f -exec chmod 644 {} \;
 
-# Add the custom wp-config.php logic for https handling
-RUN echo "if (isset(\$_SERVER['HTTP_X_FORWARDED_PROTO']) && \$_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') { \$_SERVER['HTTPS'] = 'on'; }" >> /var/www/html/blog/wp-config.php
 
 # Define volumes for persistent data storage
 VOLUME ["/var/www/html/blog/wp-content"]
